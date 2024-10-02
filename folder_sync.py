@@ -2,6 +2,7 @@ import logging
 import pathlib
 import time
 from pathlib import Path
+import hashlib
 
 class FolderSync():
     def __init__(self, source: str, replica: str, log_file: str, interval: int, debug: bool):
@@ -89,8 +90,22 @@ class FolderSync():
         else:
             self.logger.info(f"No changes in {src_file}. Skipping copy.")
 
-    def _compute_hash(self, file):
-        pass
+    @staticmethod
+    def _compute_hash(file_path: pathlib.Path) -> str:
+        """
+        Computes the MD5 hash of a file for integrity checking.
+
+        Parameters:
+        - file_path (str): Path to input file for hash calculation.
+
+        Returns:
+        - str: Calculated hash value.
+        """
+        hash_md5 = hashlib.md5()
+        with open(file_path, "rb") as f:
+            for chunk in iter(lambda: f.read(4096), b""):
+                hash_md5.update(chunk)
+        return hash_md5.hexdigest()
 
     def _copy_file(self,src_file, dest_file):
         self.logger.info(f"Copying file: {src_file} to: {dest_file}")
