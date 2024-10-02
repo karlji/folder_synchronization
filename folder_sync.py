@@ -131,10 +131,14 @@ class FolderSync():
         """
 
         if dest_file.exists():
-            if self._compute_hash(src_file) != self._compute_hash(dest_file):
-                self.logger.debug(f"File changed {src_file}.")
-                self._copy_file(src_file, dest_file)
-            # File changed, copy
+            # File size or timestamp changed, check hash
+            if src_file.stat().st_mtime != dest_file.stat().st_mtime or src_file.stat().st_size != dest_file.stat().st_size:
+                # Hash changed, copy
+                if self._compute_hash(src_file) != self._compute_hash(dest_file):
+                    self.logger.debug(f"File changed {src_file}.")
+                    self._copy_file(src_file, dest_file)
+                else:
+                    self.logger.debug(f"Hash unchanged{src_file}. Skipping copy.")
             else:
                 self.logger.debug(f"No changes in {src_file}. Skipping copy.")
         # File doesn't exist, copy
@@ -184,7 +188,7 @@ class FolderSync():
 
         except Exception as e:
             # Log the failure and attempt retry if below max_retries
-            self.logger.error(f"Error copying file: {e}")
+            self.logger.error(f"Error copying file: {e}. Attempt: {attempt}")
 
             if attempt < max_retries:
                 self.logger.info(f"Retrying file copy: {src_file} (Attempt {attempt + 1}/{max_retries})")
