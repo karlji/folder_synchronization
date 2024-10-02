@@ -23,7 +23,7 @@ class FolderSync():
         """
         self.source = Path(source)
         self.replica = Path(replica)
-        self.log_file = log_file
+        self.log_file = Path(log_file)
         self.interval = interval
         self.debug = debug
         self.logger = None
@@ -186,7 +186,7 @@ class FolderSync():
             else:
                 raise ValueError(f"Hash mismatch after copying {src_file} to {dest_file}")
 
-        except Exception as e:
+        except shutil.Error as e:
             # Log the failure and attempt retry if below max_retries
             self.logger.error(f"Error copying file: {e}. Attempt: {attempt}")
 
