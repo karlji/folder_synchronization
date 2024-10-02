@@ -115,14 +115,18 @@ class FolderSync():
         Returns:
         - void
         """
-        if not dest_file.exists():
+
+        if dest_file.exists():
+            if self._compute_hash(src_file) != self._compute_hash(dest_file):
+                self.logger.debug(f"File changed {src_file}.")
+                self._copy_file(src_file, dest_file)
+            # File changed, copy
+            else:
+                self.logger.debug(f"No changes in {src_file}. Skipping copy.")
+        # File doesn't exist, copy
+        else:
             self.logger.debug(f"File missing {dest_file}.")
             self._copy_file(src_file, dest_file)
-        elif self._compute_hash(src_file) != self._compute_hash(dest_file):
-            self.logger.debug(f"File changed {src_file}.")
-            self._copy_file(src_file, dest_file)
-        else:
-            self.logger.debug(f"No changes in {src_file}. Skipping copy.")
 
 
     @staticmethod
