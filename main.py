@@ -70,7 +70,7 @@ def main():
     #Checking parsed arguments
     source = check_path(args.source)
     replica = check_path(args.replica)
-    log_file = check_path(args.log)
+    log_file = check_path(args.log) + "\\logfile.log"
     interval = clamp(args.interval,1,86400)
 
     # Detect the OS platform and create syncer object
