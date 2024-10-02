@@ -2,38 +2,7 @@ import argparse
 import platform
 import os
 import sys
-
-
-class FolderSync:
-    def __init__(self, source, replica, log_file, interval,):
-        self.source = source
-        self.replica = replica
-        self.log_file = log_file
-        self.interval = interval
-
-    def start_sync_loop(self):
-        self.sync()
-
-    def sync(self):
-        raise NotImplementedError("Subclasses must implement this method")
-
-
-class WindowsFolderSync(FolderSync):
-    def __init__(self, source, replica, log_file, interval):
-        # Call the parent (FolderSync) constructor
-        super().__init__(source, replica, log_file, interval)
-
-    def sync(self):
-        print(f"Syncing on Windows with source: {self.source} and replica: {self.replica}")
-
-
-class LinuxFolderSync(FolderSync):
-    def __init__(self, source, replica, log_file, interval):
-        # Call the parent (FolderSync) constructor
-        super().__init__(source, replica, log_file, interval)
-
-    def sync(self):
-        print(f"Syncing on Linux with source: {self.source} and replica: {self.replica}")
+import folder_sync as fs
 
 def parse_arguments() -> argparse.Namespace:
     """
@@ -103,9 +72,9 @@ def main():
     # Detect the OS platform
     current_os = platform.system()
     if current_os == "Windows":
-        syncer = WindowsFolderSync(source, replica, log_file, interval)
+        syncer = fs.WindowsFolderSync(source, replica, log_file, interval)
     elif current_os == "Linux":
-        syncer = LinuxFolderSync(source, replica, log_file, interval)
+        syncer = fs.LinuxFolderSync(source, replica, log_file, interval)
     else:
         print("Unsupported operating system. This script only supports Windows and Linux.")
         return
