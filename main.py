@@ -69,7 +69,7 @@ def main():
     #Checking parsed arguments
     source = _check_path(args.source)
     replica = _check_path(args.replica)
-    log_file = _check_path(args.log) + "\\logfile.log"
+    log_file = os.path.join(_check_path(args.log), "logfile.log")
     interval = _clamp(args.interval,1,86400)
 
     # Detect the OS platform and create syncer object
