@@ -3,6 +3,8 @@ import pathlib
 import time
 from pathlib import Path
 import hashlib
+import shutil
+
 
 class FolderSync():
     def __init__(self, source: str, replica: str, log_file: str, interval: int, debug: bool):
@@ -100,7 +102,7 @@ class FolderSync():
         Computes the MD5 hash of a file for integrity checking.
 
         Parameters:
-        - file_path (str): Path to input file for hash calculation.
+        - file_path (pathlib.Path): Path to input file for hash calculation.
 
         Returns:
         - str: Calculated hash value.
@@ -111,9 +113,37 @@ class FolderSync():
                 hash_md5.update(chunk)
         return hash_md5.hexdigest()
 
-    def _copy_file(self,src_file, dest_file):
+    def _copy_file(self,src_file: pathlib.Path, dest_file: pathlib.Path, max_retries: int = 3, attempt: int = 1):
+        """
+        Copies a file from source to destination, and logs the action.
+
+        Parameters:
+        - src_file (pathlib.Path): Source file path to copy.
+        - dest_file (pathlib.Path): Destination file path to copy to.
+        - max_retries (int): Maximum number of retries allowed if the file copy fails.
+        - attempt (int): Current attempt count for the copy process.
+
+        Returns:
+        - void
+        """
         self.logger.info(f"Copying file: {src_file} to: {dest_file}")
-        pass
+        try:
+            shutil.copy2(src_file, dest_file)
+            # Checking hash after copy to ensure integrity
+            if self._compute_hash(src_file) == self._compute_hash(dest_file):
+                self.logger.info(f"File copied and hash integrity verified for {src_file}")
+            else:
+                raise ValueError(f"Hash mismatch after copying {src_file} to {dest_file}")
+
+        except Exception as e:
+            # Log the failure and attempt retry if below max_retries
+            self.logger.error(f"Error copying file: {e}")
+
+            if attempt < max_retries:
+                self.logger.info(f"Retrying file copy: {src_file} (Attempt {attempt + 1}/{max_retries})")
+                self._copy_file(src_file, dest_file, max_retries, attempt + 1)
+            else:
+                self.logger.error(f"Failed to copy {src_file} after {max_retries} attempts. Skipping file.")
 
     def start_sync_loop(self):
         """
