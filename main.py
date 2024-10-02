@@ -32,7 +32,6 @@ def check_path(path: str) -> str:
     Returns:
     - str: Path of existing directory.
     """
-    path = path + "_new3"
     if not os.path.exists(path):
         print(f"Folder doesn't exist: {path}")
         while True:
@@ -59,6 +58,11 @@ def clamp(n: int, minn: int, maxn: int) -> int:
     Returns:
     - int: The clamped value.
     """
+
+    clamped = max(min(maxn, n), minn)
+    if clamped != n:
+        print(f'The argument value {n} was clamped to {clamped}')
+    return clamped
 
 def main():
     args = parse_arguments()
