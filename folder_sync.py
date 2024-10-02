@@ -52,36 +52,63 @@ class FolderSync():
         self.logger.addHandler(file_handler)
         self.logger.addHandler(console_handler)
 
-    def _sync_dirs(self):
+    def _sync_folders(self):
         """
-         Loops through source folders/files and calls compare_and_copy method.
-
-        Parameters:
-        - self
+         Logs start and finish of sync and calls _sync_source, _sync_replica
 
         Returns:
         - void
         """
         self.logger.info("Starting sync.")
+        self._sync_source()
+        self._sync_replica()
+        self.logger.info("Finished sync.")
+
+    def _sync_source(self):
+        """
+         Loops through source folders/files and calls _compare_files method.
+
+        Returns:
+        - void
+        """
         for src_path in self.source.rglob('*'):
             relative_path = src_path.relative_to(self.source)
             dest_path = self.replica / relative_path
 
             if src_path.is_file():
-                # Compare and copy files
+                # Compare and copy files from source to replica
                 self._compare_files(src_path, dest_path)
             elif src_path.is_dir() and not dest_path.exists():
                 # Create directories that don't exist in replica
                 dest_path.mkdir(parents=True)
                 self.logger.info(f"Created directory: {dest_path}")
-        self.logger.info("Finished sync.")
+
+    def _sync_replica(self):
+        """
+         Loops through replica folders/files and removes excessive ones.
+
+        Returns:
+        - void
+        """
+        for rep_path in self.replica.rglob('*'):
+            relative_path = rep_path.relative_to(self.replica)
+            src_path = self.source / relative_path
+
+            # if file/folder exists in source, skip to next
+            if src_path.exists():
+                continue
+            if rep_path.is_dir():
+                shutil.rmtree(rep_path)
+                self.logger.info(f"Deleted directory: {rep_path}")
+            else:
+                os.remove(rep_path)
+                self.logger.info(f"Deleted file: {rep_path}")
 
     def _compare_files(self, src_file: pathlib.Path, dest_file: pathlib.Path):
         """
         Compares two files by their hashes, and if they differ, copies the source file to the replica.
 
         Parameters:
-        - self
         - src_file (str): Source file path for comparison
         - dest_file (str): Replica file path for comparison
 
@@ -147,18 +174,6 @@ class FolderSync():
             else:
                 self.logger.error(f"Failed to copy {src_file} after {max_retries} attempts. Skipping file.")
 
-    def _remove_file(self,file_path: pathlib.Path):
-        """
-        Deletes a file from the replica folder, and logs the action.
-
-        Parameters:
-        - file_path (pathlib.Path): Replica file path to delete.
-
-        Returns:
-        - void
-        """
-        os.remove(file_path)
-        self.logger.info(f"Deleted file: {file_path}")
 
     def start_sync_loop(self):
         """
@@ -169,6 +184,6 @@ class FolderSync():
         """
         self.logger.info(f"Starting sync loop. Syncing every {self.interval} seconds.")
         while True:
-            self._sync_dirs()
+            self._sync_folders()
             self.logger.debug(f"Waiting {self.interval} seconds before the next sync.")
             time.sleep(self.interval)
