@@ -7,6 +7,7 @@ import shutil
 import os
 from logging.handlers import RotatingFileHandler
 
+
 class FolderSync():
     def __init__(self, source: str, replica: str, log_file: str, interval: int, debug: bool):
         """
@@ -29,7 +30,6 @@ class FolderSync():
         self.debug = debug
         self.logger = None
         self._setup_logging()
-
 
     def _setup_logging(self):
         """
@@ -147,7 +147,6 @@ class FolderSync():
             self.logger.debug(f"File missing {dest_file}.")
             self._copy_file(src_file, dest_file)
 
-
     @staticmethod
     def _compute_hash(file_path: pathlib.Path) -> str:
         """
@@ -165,7 +164,7 @@ class FolderSync():
                 hash_md5.update(chunk)
         return hash_md5.hexdigest()
 
-    def _copy_file(self,src_file: pathlib.Path, dest_file: pathlib.Path, max_retries: int = 3, attempt: int = 1):
+    def _copy_file(self, src_file: pathlib.Path, dest_file: pathlib.Path, max_retries: int = 3, attempt: int = 1):
         """
         Copies a file from source to destination, and logs the action.
 
@@ -196,7 +195,6 @@ class FolderSync():
                 self._copy_file(src_file, dest_file, max_retries, attempt + 1)
             else:
                 self.logger.error(f"Failed to copy {src_file} after {max_retries} attempts. Skipping file.")
-
 
     def start_sync_loop(self):
         """

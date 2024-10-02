@@ -3,6 +3,8 @@ import platform
 import os
 import sys
 import folder_sync as fs
+from pathlib import Path
+
 
 def _parse_arguments() -> argparse.Namespace:
     """
@@ -15,7 +17,7 @@ def _parse_arguments() -> argparse.Namespace:
 
     parser.add_argument('--source', type=str, required=True, help='Path to the source folder.')
     parser.add_argument('--replica', type=str, required=True, help='Path to the replica folder.')
-    parser.add_argument('--log', type=str, required=True, help='Path to the log file.')
+    parser.add_argument('--log', type=str, required=True, help='Path to the log folder.')
     parser.add_argument('--interval', type=int, required=True, help='Sync interval in seconds. (1-86400)')
     parser.add_argument('--debug', action='store_true', help='Sets logging to debug level.')
     return parser.parse_args()
@@ -36,7 +38,8 @@ def _check_path(path: str) -> str:
         while True:
             usr_input = input("Create new folder? (y/n): ").lower().strip()
             if usr_input == "y":
-                os.mkdir(path)
+                Path(path).mkdir(parents=True)
+                print(f"Created new folder: {path}")
             elif usr_input == "n":
                 sys.exit()
             else:
@@ -44,6 +47,7 @@ def _check_path(path: str) -> str:
                 continue
             break
     return path
+
 
 def _clamp(n: int, minn: int, maxn: int) -> int:
     """
@@ -63,25 +67,31 @@ def _clamp(n: int, minn: int, maxn: int) -> int:
         print(f'The argument value {n} was clamped to {clamped}')
     return clamped
 
+
 def main():
     args = _parse_arguments()
 
     #Checking parsed arguments
-    source = _check_path(args.source)
-    replica = _check_path(args.replica)
-    log_file = os.path.join(_check_path(args.log), "logfile.log")
-    interval = _clamp(args.interval,1,86400)
+    try:
+        source = _check_path(args.source)
+        replica = _check_path(args.replica)
+        log_file_dir = _check_path(os.path.dirname(args.log))
+    except PermissionError as e:
+        print(f"Permission error: {e}")
+        sys.exit(1)
+    log_file = os.path.join(log_file_dir, "logfile.log")
+    interval = _clamp(args.interval, 1, 86400)
 
-    # Detect the OS platform and create syncer object
+    # Detect the OS platform
     current_os = platform.system()
-    if current_os == "Windows" or current_os == "Linux":
-        syncer = fs.FolderSync(source, replica, log_file, interval, args.debug)
-    else:
-        print("Unsupported operating system. This script only supports Windows and Linux.")
-        return
+    if current_os not in ["Windows", "Linux"]:
+        print(f"Unsupported operating system: {current_os}. This script supports only Windows and Linux.")
+        sys.exit(1)
 
     # Start the sync process
+    syncer = fs.FolderSync(source, replica, log_file, interval, args.debug)
     syncer.start_sync_loop()
+
 
 if __name__ == "__main__":
     main()
