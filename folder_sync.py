@@ -71,17 +71,24 @@ class FolderSync():
         Returns:
         - void
         """
-        for src_path in self.source.rglob('*'):
-            relative_path = src_path.relative_to(self.source)
-            dest_path = self.replica / relative_path
+        try:
+            for src_path in self.source.rglob('*'):
+                relative_path = src_path.relative_to(self.source)
+                dest_path = self.replica / relative_path
 
-            if src_path.is_file():
-                # Compare and copy files from source to replica
-                self._compare_files(src_path, dest_path)
-            elif src_path.is_dir() and not dest_path.exists():
-                # Create directories that don't exist in replica
-                dest_path.mkdir(parents=True)
-                self.logger.info(f"Created directory: {dest_path}")
+                if src_path.is_file():
+                    # Compare and copy files from source to replica
+                    self._compare_files(src_path, dest_path)
+                elif src_path.is_dir() and not dest_path.exists():
+                    # Create directories that don't exist in replica
+                    dest_path.mkdir(parents=True)
+                    self.logger.info(f"Created directory: {dest_path}")
+        except FileNotFoundError as e:
+            self.logger.error(f"Source folder or file not found: {e}")
+            return
+        except PermissionError as e:
+            self.logger.error(f"Permission denied: {e}")
+            return
 
     def _sync_replica(self):
         """
@@ -90,19 +97,26 @@ class FolderSync():
         Returns:
         - void
         """
-        for rep_path in self.replica.rglob('*'):
-            relative_path = rep_path.relative_to(self.replica)
-            src_path = self.source / relative_path
+        try:
+            for rep_path in self.replica.rglob('*'):
+                relative_path = rep_path.relative_to(self.replica)
+                src_path = self.source / relative_path
 
-            # if file/folder exists in source, skip to next
-            if src_path.exists():
-                continue
-            if rep_path.is_dir():
-                shutil.rmtree(rep_path)
-                self.logger.info(f"Deleted directory: {rep_path}")
-            else:
-                os.remove(rep_path)
-                self.logger.info(f"Deleted file: {rep_path}")
+                # if file/folder exists in source, skip to next
+                if src_path.exists():
+                    continue
+                if rep_path.is_dir():
+                    shutil.rmtree(rep_path)
+                    self.logger.info(f"Deleted directory: {rep_path}")
+                else:
+                    os.remove(rep_path)
+                    self.logger.info(f"Deleted file: {rep_path}")
+        except FileNotFoundError as e:
+            self.logger.error(f"Source folder or file not found: {e}")
+            return
+        except PermissionError as e:
+            self.logger.error(f"Permission denied: {e}")
+            return
 
     def _compare_files(self, src_file: pathlib.Path, dest_file: pathlib.Path):
         """
@@ -187,7 +201,10 @@ class FolderSync():
         - void
         """
         self.logger.info(f"Starting sync loop. Syncing every {self.interval} seconds.")
-        while True:
-            self._sync_folders()
-            self.logger.debug(f"Waiting {self.interval} seconds before the next sync.")
-            time.sleep(self.interval)
+        try:
+            while True:
+                self._sync_folders()
+                self.logger.debug(f"Waiting {self.interval} seconds before the next sync.")
+                time.sleep(self.interval)
+        except KeyboardInterrupt:
+            self.logger.info("Sync process interrupted. Shutting down.")
