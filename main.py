@@ -8,8 +8,6 @@ def _parse_arguments() -> argparse.Namespace:
     """
     Parses command-line arguments for source, replica, interval, and log file.
 
-    Parameters:
-
     Returns:
     - argparse.Namespace: Parsed arguments
     """
