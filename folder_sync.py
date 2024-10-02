@@ -1,4 +1,5 @@
 import logging
+import pathlib
 import time
 from pathlib import Path
 
@@ -65,13 +66,34 @@ class FolderSync():
 
             if src_path.is_file():
                 # Compare and copy files
-                self._compare_and_copy(src_path, dest_path)
+                self._compare_files(src_path, dest_path)
             elif src_path.is_dir() and not dest_path.exists():
                 # Create directories that don't exist in replica
                 dest_path.mkdir(parents=True)
                 self.logger.info(f"Created directory: {dest_path}")
 
-    def _compare_and_copy(self, src_file: str, dest_file: str):
+    def _compare_files(self, src_file: pathlib.Path, dest_file: pathlib.Path):
+        """
+        Compares two files by their hashes, and if they differ, copies the source file to the replica.
+
+        Parameters:
+        - self
+        - src_file (str): Source file path for comparison
+        - dest_file (str): Replica file path for comparison
+
+        Returns:
+        - void
+        """
+        if not dest_file.exists() or self._compute_hash(src_file) != self._compute_hash(dest_file):
+            self._copy_file(src_file, dest_file)
+        else:
+            self.logger.info(f"No changes in {src_file}. Skipping copy.")
+
+    def _compute_hash(self, file):
+        pass
+
+    def _copy_file(self,src_file, dest_file):
+        self.logger.info(f"Copying file: {src_file} to: {dest_file}")
         pass
 
     def start_sync_loop(self):
