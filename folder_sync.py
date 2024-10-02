@@ -1,8 +1,8 @@
 import logging
 import time
+from abc import ABC, abstractmethod
 
-
-class FolderSync:
+class FolderSync(ABC):
     def __init__(self, source: str, replica: str, log_file: str, interval: int):
         """
          __init__
@@ -61,9 +61,18 @@ class FolderSync:
             self.sync()
             self.logger.info(f"Waiting {self.interval} seconds before the next sync.")
             time.sleep(self.interval)
-
+    @abstractmethod
     def sync(self):
-        raise NotImplementedError("Subclasses must implement this method")
+        """
+        Abstract method for syncing. This must be implemented by platform-specific classes.
+
+        Parameters:
+        - self
+
+        Returns:
+        - void
+        """
+        pass
 
 
 class WindowsFolderSync(FolderSync):
