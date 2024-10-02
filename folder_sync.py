@@ -1,8 +1,8 @@
 import logging
 import time
-from abc import ABC, abstractmethod
+from pathlib import Path
 
-class FolderSync(ABC):
+class FolderSync():
     def __init__(self, source: str, replica: str, log_file: str, interval: int, debug: bool):
         """
          __init__
@@ -17,15 +17,16 @@ class FolderSync(ABC):
         Returns:
         - void
         """
-        self.source = source
-        self.replica = replica
+        self.source = Path(source)
+        self.replica = Path(replica)
         self.log_file = log_file
         self.interval = interval
         self.debug = debug
         self.logger = None
-        self.setup_logging()
+        self._setup_logging()
 
-    def setup_logging(self):
+
+    def _setup_logging(self):
         """
          Sets up logging to both the console and a log file.
 
@@ -50,6 +51,14 @@ class FolderSync(ABC):
         self.logger.addHandler(file_handler)
         self.logger.addHandler(console_handler)
 
+    def _sync(self):
+        self.logger.info("Starting sync.")
+        for src_path in self.source.rglob('*'):
+            relative_path = src_path.relative_to(self.source)
+            dest_path = self.replica / relative_path
+            print(dest_path)
+
+
     def start_sync_loop(self):
         """
         Starts the periodic sync loop based on the interval provided.
@@ -62,36 +71,6 @@ class FolderSync(ABC):
         """
         self.logger.info(f"Starting sync loop. Syncing every {self.interval} seconds.")
         while True:
-            self.sync()
+            self._sync()
             self.logger.debug(f"Waiting {self.interval} seconds before the next sync.")
             time.sleep(self.interval)
-    @abstractmethod
-    def sync(self):
-        """
-        Abstract method for syncing. This must be implemented by platform-specific classes.
-
-        Parameters:
-        - self
-
-        Returns:
-        - void
-        """
-        pass
-
-
-class WindowsFolderSync(FolderSync):
-    def __init__(self, source: str, replica: str, log_file: str, interval: int, debug: bool):
-        # Call the parent (FolderSync) constructor
-        super().__init__(source, replica, log_file, interval, debug)
-
-    def sync(self):
-        print(f"Syncing on Windows with source: {self.source} and replica: {self.replica}")
-
-
-class LinuxFolderSync(FolderSync):
-    def __init__(self, source: str, replica: str, log_file: str, interval: int, debug: bool):
-        # Call the parent (FolderSync) constructor
-        super().__init__(source, replica, log_file, interval, debug)
-
-    def sync(self):
-        print(f"Syncing on Linux with source: {self.source} and replica: {self.replica}")

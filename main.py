@@ -4,7 +4,7 @@ import os
 import sys
 import folder_sync as fs
 
-def parse_arguments() -> argparse.Namespace:
+def _parse_arguments() -> argparse.Namespace:
     """
     Parses command-line arguments for source, replica, interval, and log file.
 
@@ -23,7 +23,7 @@ def parse_arguments() -> argparse.Namespace:
     return parser.parse_args()
 
 
-def check_path(path: str) -> str:
+def _check_path(path: str) -> str:
     """
     Checks whether provided directory path exists. If not, asks user to create new folder.
 
@@ -47,7 +47,7 @@ def check_path(path: str) -> str:
             break
     return path
 
-def clamp(n: int, minn: int, maxn: int) -> int:
+def _clamp(n: int, minn: int, maxn: int) -> int:
     """
     Clamps a value to be within a specified range.
 
@@ -66,23 +66,21 @@ def clamp(n: int, minn: int, maxn: int) -> int:
     return clamped
 
 def main():
-    args = parse_arguments()
+    args = _parse_arguments()
     debug = False
 
     #Checking parsed arguments
-    source = check_path(args.source)
-    replica = check_path(args.replica)
-    log_file = check_path(args.log) + "\\logfile.log"
-    interval = clamp(args.interval,1,86400)
+    source = _check_path(args.source)
+    replica = _check_path(args.replica)
+    log_file = _check_path(args.log) + "\\logfile.log"
+    interval = _clamp(args.interval,1,86400)
     if args.debug:
         debug = True
 
     # Detect the OS platform and create syncer object
     current_os = platform.system()
-    if current_os == "Windows":
-        syncer = fs.WindowsFolderSync(source, replica, log_file, interval, debug)
-    elif current_os == "Linux":
-        syncer = fs.LinuxFolderSync(source, replica, log_file, interval, debug)
+    if current_os == "Windows" or current_os == "Linux":
+        syncer = fs.FolderSync(source, replica, log_file, interval, debug)
     else:
         print("Unsupported operating system. This script only supports Windows and Linux.")
         return
