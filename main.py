@@ -17,10 +17,33 @@ def _parse_arguments() -> argparse.Namespace:
 
     parser.add_argument('--source', type=str, required=True, help='Path to the source folder.')
     parser.add_argument('--replica', type=str, required=True, help='Path to the replica folder.')
-    parser.add_argument('--log', type=str, required=True, help='Path to the log folder.')
+    parser.add_argument('--log', type=str, required=True, help='Path to the log file or directory.')
     parser.add_argument('--interval', type=int, required=True, help='Sync interval in seconds. (1-86400)')
     parser.add_argument('--debug', action='store_true', help='Sets logging to debug level.')
     return parser.parse_args()
+
+
+def _resolve_log_file(log_path_str: str) -> str:
+    """
+    Determines whether the log path is a file or directory.
+    If it's a directory, a default log file name will be added.
+
+    Parameters:
+    - log_path_str (str): The log path provided by the user.
+
+    Returns:
+    - str: The resolved log file path.
+    """
+    log_path = Path(log_path_str)
+
+    # Check if the path is clearly a file (has a file extension)
+    if log_path.suffix:  # Suffix will return the file extension like '.log'
+        _check_path(str(log_path.parent))  # Check parent directory for the log file
+        return str(log_path)
+    else:
+        # If no file extension, treat it as a directory and append default log filename
+        _check_path(str(log_path))  # Ensure the directory exists
+        return str(log_path / "logfile.log")
 
 
 def _check_path(path: str) -> str:
@@ -75,11 +98,11 @@ def main():
     try:
         source = _check_path(args.source)
         replica = _check_path(args.replica)
-        log_file_dir = _check_path(os.path.dirname(args.log))
+        log_file = _resolve_log_file(args.log)
+
     except PermissionError as e:
         print(f"Permission error: {e}")
         sys.exit(1)
-    log_file = os.path.join(log_file_dir, "logfile.log")
     interval = _clamp(args.interval, 1, 86400)
 
     # Detect the OS platform
