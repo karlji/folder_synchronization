@@ -5,6 +5,7 @@ from pathlib import Path
 import hashlib
 import shutil
 import os
+from logging.handlers import RotatingFileHandler
 
 class FolderSync():
     def __init__(self, source: str, replica: str, log_file: str, interval: int, debug: bool):
@@ -42,7 +43,7 @@ class FolderSync():
         if self.debug:
             self.logger.setLevel(logging.DEBUG)
         # Create handlers for both file and console logging
-        file_handler = logging.FileHandler(self.log_file)
+        file_handler = RotatingFileHandler(self.log_file, maxBytes=5 * 1024 * 1024, backupCount=5)
         console_handler = logging.StreamHandler()
         # Set log format
         formatter = logging.Formatter('%(asctime)s - %(levelname)s - %(message)s')

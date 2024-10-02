@@ -17,7 +17,7 @@ def _parse_arguments() -> argparse.Namespace:
     parser.add_argument('--replica', type=str, required=True, help='Path to the replica folder.')
     parser.add_argument('--log', type=str, required=True, help='Path to the log file.')
     parser.add_argument('--interval', type=int, required=True, help='Sync interval in seconds. (1-86400)')
-    parser.add_argument('--debug', type=bool, required=False, help='Sets logging to debug level (true/false)')
+    parser.add_argument('--debug', action='store_true', help='Sets logging to debug level.')
     return parser.parse_args()
 
 
@@ -65,20 +65,17 @@ def _clamp(n: int, minn: int, maxn: int) -> int:
 
 def main():
     args = _parse_arguments()
-    debug = False
 
     #Checking parsed arguments
     source = _check_path(args.source)
     replica = _check_path(args.replica)
     log_file = _check_path(args.log) + "\\logfile.log"
     interval = _clamp(args.interval,1,86400)
-    if args.debug:
-        debug = True
 
     # Detect the OS platform and create syncer object
     current_os = platform.system()
     if current_os == "Windows" or current_os == "Linux":
-        syncer = fs.FolderSync(source, replica, log_file, interval, debug)
+        syncer = fs.FolderSync(source, replica, log_file, interval, args.debug)
     else:
         print("Unsupported operating system. This script only supports Windows and Linux.")
         return
