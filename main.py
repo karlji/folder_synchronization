@@ -73,7 +73,7 @@ def main():
     log_file = check_path(args.log)
     interval = clamp(args.interval,1,86400)
 
-    # Detect the OS platform
+    # Detect the OS platform and create syncer object
     current_os = platform.system()
     if current_os == "Windows":
         syncer = fs.WindowsFolderSync(source, replica, log_file, interval)
