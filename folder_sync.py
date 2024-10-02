@@ -4,7 +4,7 @@ import time
 from pathlib import Path
 import hashlib
 import shutil
-
+import os
 
 class FolderSync():
     def __init__(self, source: str, replica: str, log_file: str, interval: int, debug: bool):
@@ -74,6 +74,7 @@ class FolderSync():
                 # Create directories that don't exist in replica
                 dest_path.mkdir(parents=True)
                 self.logger.info(f"Created directory: {dest_path}")
+        self.logger.info("Finished sync.")
 
     def _compare_files(self, src_file: pathlib.Path, dest_file: pathlib.Path):
         """
@@ -95,6 +96,7 @@ class FolderSync():
             self._copy_file(src_file, dest_file)
         else:
             self.logger.debug(f"No changes in {src_file}. Skipping copy.")
+
 
     @staticmethod
     def _compute_hash(file_path: pathlib.Path) -> str:
@@ -144,6 +146,19 @@ class FolderSync():
                 self._copy_file(src_file, dest_file, max_retries, attempt + 1)
             else:
                 self.logger.error(f"Failed to copy {src_file} after {max_retries} attempts. Skipping file.")
+
+    def _remove_file(self,file_path: pathlib.Path):
+        """
+        Deletes a file from the replica folder, and logs the action.
+
+        Parameters:
+        - file_path (pathlib.Path): Replica file path to delete.
+
+        Returns:
+        - void
+        """
+        os.remove(file_path)
+        self.logger.info(f"Deleted file: {file_path}")
 
     def start_sync_loop(self):
         """
